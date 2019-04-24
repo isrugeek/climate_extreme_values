@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 """
-Quantile Forest Experiment
+Utilities for Quantile Training Data
 
-The idea of this experiment is that, if we want to be able to predict the near
-term maxima in some time series, it might be possible to learn the CDF over
-future values associated with the currently observed window, and then take the
-maximum of that CDF as the prediction for the max. We compare this approach
-with the more direct "just predict the maximum" approach.
+This gives utilities for transforming a single time series into a series of
+windows (across quantiles) that can be used for training. There are also some
+simulation utilties, that let you test the code without having any real data.
 """
 import numpy as np
 
@@ -28,7 +26,7 @@ def simulate_ts(T=100, p=10, **kwargs):
     """
     X = np.zeros((T, p))
     for j in range(p):
-        X[:, j] = sim_ou()
+        X[:, j] = sim_ou(T, **kwargs)
 
     beta = np.random.normal(size=(p,))
     y = np.dot(X, beta)
@@ -63,7 +61,7 @@ def extract_window(x, past, now, future):
     return x[past:now], x[now:future]
 
 
-def windows(x, l_past=50, l_future=20, stride=5):
+def windows(x, l_past=50, l_future=20, stride=25):
     """
     Strided Windows around a Timepoint
 
