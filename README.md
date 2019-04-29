@@ -34,8 +34,9 @@ pip install package-name
 
 - Clone this repo:
 ```bash
-git clone https://github.com/isrugeek/climate_extreme
-cd semcolour
+git clone https://github.com/isrugeek/climate_extreme_values
+cd climate_extreme_values
 ```
 Make sure to follow [This](https://github.com/paulo-o/forecast_rodeo)  for preparation for generating forecasts. 
 
+Run the code from the main directory which the README.md is located
