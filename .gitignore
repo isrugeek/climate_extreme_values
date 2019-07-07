@@ -279,3 +279,6 @@ model/
 log/
 plots/
 scalar_mode/
+# Experiment files
+diagnosis.ipynb
+exiperiment.ipynb

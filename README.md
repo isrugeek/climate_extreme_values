@@ -1,5 +1,6 @@
 
-# FORECASTING MAXIMA IN CLIMATE TIME-SERIES
+# Forecasting Maxima in Climate Time Series
+ [Israel Goytom](http://isrugeek.github.io), [Kris Sankaran](.),[Yoshua Benjio](.)
 [Project](https://github.com/isrugeek/climate_extreme_values) | [Arxiv](https://arxiv.org/abs/) |
 
 
@@ -7,8 +8,7 @@
 #### Abstract
 Climate change is already altering the prob- abilities of weather hazards. Accurate prediction of cli- mate extremes can inform effective preparation against weather-induced stresses. Forecasting extreme weather events accurately is a task that has attracted interest for many years. Classical and, to a lesser extent, machine learning-based approaches have handled this issue; how- ever, such systems are hard to tune or scale. While the prediction of extremes has been the subject of investiga- tion across several communities, including meteorology, machine learning, and statistics, it has been subject to far less scrutiny than the prediction of conditional means. In this work, we offer a systematic comparison of existing approaches on a pair of common tasks, maximum temper- ature and precipitation prediction. Further, motivated by this comparison, we propose a method to predict maxima in time series that unifies deep learning with extreme value theory
 
-Forecasting Maxima in Climate Time Series
- [Israel Goytom](http://isrugeek.github.io), [Kris Sankaran](.),[Yoshua Benjio](.)
+This is Pytorch implmentation for Forecasting Maxima in Climate Time Series
 
 
 **Note**: Please Download the dataset file from [climate.weather.gc.ca](climate.weather.gc.ca), [Kaggle](https://kaggle.com/c/short-term-load-forecasting-challenge/data) or 
@@ -37,8 +37,12 @@ git clone https://github.com/isrugeek/climate_extreme_values
 cd climate_extreme_values
 ```
 Make sure to follow [This](https://github.com/paulo-o/forecast_rodeo)  for preparation if you are using the Subseasonal dataset.
+
 - If you are using the *Kaggle* dataset you need to interpolate using `interpolate.R`
 
 Run the code from the main directory which the README.md is located
+
 -Train using train_main.py eg.`python train_main.py LSTM`
+
+
 -Forecast using forecaster.py
