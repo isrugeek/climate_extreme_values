@@ -1,16 +1,17 @@
 
-# Forecasting Extreme values in Time Series for Climate Change
+# FORECASTING MAXIMA IN CLIMATE TIME-SERIES
 [Project](https://github.com/isrugeek/climate_extreme_values) | [Arxiv](https://arxiv.org/abs/) |
-[Dataset](https://kaggle.com/c/short-term-load-forecasting-challenge/data)
 
-### This project is still under development
-Pytorch and Keras implementation for systematic comparison of exist-ing approaches on a pair common tasks, subsea-sonal forecasting and power consumption predic-tion. 
 
-Forecasting Extreme values in Time Series for Climate Change
+### Note: This project is still under development
+#### Abstract
+Climate change is already altering the prob- abilities of weather hazards. Accurate prediction of cli- mate extremes can inform effective preparation against weather-induced stresses. Forecasting extreme weather events accurately is a task that has attracted interest for many years. Classical and, to a lesser extent, machine learning-based approaches have handled this issue; how- ever, such systems are hard to tune or scale. While the prediction of extremes has been the subject of investiga- tion across several communities, including meteorology, machine learning, and statistics, it has been subject to far less scrutiny than the prediction of conditional means. In this work, we offer a systematic comparison of existing approaches on a pair of common tasks, maximum temper- ature and precipitation prediction. Further, motivated by this comparison, we propose a method to predict maxima in time series that unifies deep learning with extreme value theory
+
+Forecasting Maxima in Climate Time Series
  [Israel Goytom](http://isrugeek.github.io), [Kris Sankaran](.),[Yoshua Benjio](.)
 
 
-**Note**: Please Download the dataset file from [Kaggle](https://kaggle.com/c/short-term-load-forecasting-challenge/data) or 
+**Note**: Please Download the dataset file from [climate.weather.gc.ca](climate.weather.gc.ca), [Kaggle](https://kaggle.com/c/short-term-load-forecasting-challenge/data) or 
           [Subseasonal Dataset](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IHBANG)
 
 ## Setup
@@ -18,26 +19,26 @@ Forecasting Extreme values in Time Series for Climate Change
 ### Prerequisites
 - Linux or OSX
 - NVIDIA GPU + CUDA CuDNN (CPU mode and CUDA without CuDNN may work with minimal modification, but untested)
-- Pyro
 - Pytorch
-- Keras with tensorflow backend
 
 
 
 ### Getting Started
 - Install Pytorch visit https://pytorch.org/, Pyro visit http://pyro.ai/
-- Install keras with tensorflow backend and dependencies from https://keras.io/#installation
-- Install python packages `jupyter-notebook`, `matplotlib`,`scikit` and `pandas` 
+#installation
+- Install python packages `jupyter-notebook`, `matplotlib`,`scikit` and `pandas` for more see `requirements.txt`
 ```bash
-pip install package-name
+pip install -r requirements.txt
 ```
-- Install [livelossplot](https://github.com/stared/livelossplot)(optional) - a live monitor during training.
 
 - Clone this repo:
 ```bash
 git clone https://github.com/isrugeek/climate_extreme_values
 cd climate_extreme_values
 ```
-Make sure to follow [This](https://github.com/paulo-o/forecast_rodeo)  for preparation for generating forecasts. 
+Make sure to follow [This](https://github.com/paulo-o/forecast_rodeo)  for preparation if you are using the Subseasonal dataset.
+- If you are using the *Kaggle* dataset you need to interpolate using `interpolate.R`
 
 Run the code from the main directory which the README.md is located
+-Train using train_main.py eg.`python train_main.py LSTM`
+-Forecast using forecaster.py
