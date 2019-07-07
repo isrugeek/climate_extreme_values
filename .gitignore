@@ -1,4 +1,8 @@
-
+#Vscode
+.vscode
+#Jupyter
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
 
 ### Linux ###
 *~
@@ -270,4 +274,8 @@ tags
 [._]*.un~
 
 # Exclude data files
-data/*
+data/
+model/
+log/
+plots/
+scalar_mode/
