@@ -30,10 +30,5 @@ def save_or_show_plot(file_nm: str, save: bool):
 def numpy_to_tensor(x):
     return torch.from_numpy(x).type(torch.FloatTensor).to(device)
 
-def model_saver (file_nm: str, model_type: bool, model):
-    if model_type == 'LSTM':
-        torch.save(model, os.path.join(os.path.dirname(__file__), "model", file_nm))
-    if model_type == 'ENCDEC':
-        torch.save(model,os.path.join(os.path.dirname(__file__),"model",file_nm))
-    if model_type == 'GULSTM':
-        torch.save(model,os.path.join(os.path.dirname(__file__),"model",file_nm))
+def model_saver (file_nm: str, model):
+    torch.save(model, os.path.join(os.path.dirname(__file__), "model", file_nm))
