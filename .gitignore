@@ -274,10 +274,10 @@ tags
 [._]*.un~
 
 # Exclude data files
-data/
-model/
-log/
-plots/
+data/*
+model/*
+log/*
+plots/*
 scalar_mode/
 # Experiment files
 diagnosis.ipynb
