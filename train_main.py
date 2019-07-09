@@ -5,9 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
-import torch
 from torch import nn
-from torch import optim
 import json
 import os
 import utils
@@ -244,13 +242,24 @@ def GULSTMTrainer (dataset):
             y_batch = batch[1].cuda().float()
             out = model.forward(x_batch)
             loss = model.loss(out, y_batch)
-    #         opt.step()
+            #GU playing ground
+            x_prev,x_t = batch[0].cuda().float(), batch[1].cuda().float()
+            mu_hat = model.forward(x_prev)
+
+            # negative l1
+            l1 = x_t - mu_hat
+            new_loss = l1 + torch.exp(-l1)
+            new_loss.backward()
+            optimizer.step()
+            # print ("Loss components {} | {} | {}".format(l1,torch.exp(-l1)),new_loss)
+            #  END 
             if epoch == n_epochs - 1:
                 train_true_y.append((batch[0]).detach().numpy().reshape(-1))
                 train_pred_y.append((out.cpu()).detach().numpy().reshape(-1))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            # print ("Loss components {} | {} | {} | {}".format(l1,torch.exp(-l1)),new_loss,loss)
             ep_loss.append(loss.item())
         print()
     outLoss = open("log/gulstm.txt", "w")
