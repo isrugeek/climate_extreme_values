@@ -19,9 +19,9 @@ A Pytorch implmentation for Forecasting Maxima in Climate Time Series
 **Note**: Please Download the dataset file from [climate.weather.gc.ca](climate.weather.gc.ca), [Kaggle](https://kaggle.com/c/short-term-load-forecasting-challenge/data) or 
           [Subseasonal Dataset](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IHBANG)
 
-### A recipe to get started
 
-## Setup
+
+## A recipe to get started
 
 ### Prerequisites
 - Linux or OSX
