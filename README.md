@@ -58,4 +58,4 @@ Run the code from the main directory which the README.md is located
 `main.ipynb` is an interactive notebook to test the forecaster.
 
 
- **Note:** This project is still under development, 
+ **Note:** *This project is still under development*
