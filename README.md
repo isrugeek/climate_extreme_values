@@ -35,7 +35,7 @@ cd climate_extreme_values
 
 
 #### Setup python enviroment 
-- to install python packages like `jupyter-notebook`, `matplotlib`,`scikit` and `pandas` see `requirements.txt`
+- to install python packages `requirements.txt`
 
 ```bash
 pip install -r requirements.txt
