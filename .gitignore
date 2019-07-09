@@ -68,3 +68,4 @@ scalar_mode/
 # Experiment files
 diagnosis.ipynb
 exiperiment.ipynb
+run.sh
