@@ -1,85 +1,61 @@
+#!/usr/bin/env python
 from sklearn.metrics import mean_absolute_error
-import matplotlib
-matplotlib.use('agg')
+from torch import nn
+from utils import device
 import argparse
+import constants
+import json
+import matplotlib
+import mkdir
+import models
 import numpy as np
+import os
 import pandas as pd
 import torch
-from torch import nn
-import json
-import os
 import utils
-from utils import device
-import models
-import constants
-import mkdir
 import warnings
+matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
 
-def pre_process (dataset, save_plots = True):
-    save_plots = save_plots
-    df = dataset 
+def pre_process (df, save_plots = True):
     df = df.drop(['max_humidex', 'min_windchill', 'sunrise',
                   'sunset', 'sunlight', 'sunrise_f', 'sunset_f'], axis=1)
-    non_null_columns = [
-        col for col in df.columns if df.loc[:, col].notna().any()]
-    df[non_null_columns]
     null_columns = df.columns[df.isnull().any()]
+    df = df[df['Year'] > 1954]
 
-    df = (df[df['Year'] > 1954])
-    #utils.fill_missing_one_day(df.values)
-    # df = df.drop(['max_humidex', 'min_windchill'], axis=1)
     for col_name in null_columns:
-        if (df[col_name].isnull().sum() < 200):
-            #print ("Filling {}'s null data by previous day.".format(col_name))
+        null_count = df[col_name].isnull().sum()
+
+        if null_count < 200:
             utils.fill_missing_one_day(df[[col_name]].values)
-            null_columns = df.columns[df.isnull().any()]
-        if (df[col_name].isnull().sum() > (int(int(df.shape[0])*0.8))):
-            #print ("Dropping {}.".format(col_name))
+        elif null_count > len(df) * 0.8:
             df = df.drop([col_name], axis=1)
-            null_columns=df.columns[df.isnull().any()]
-    for col_name in null_columns:
-        if (df[col_name].isnull().sum() > 200):
-            #print ("Filling {}'s null data by Mean.".format(col_name))
+        elif null_count > 200:
             df[[col_name]] = df[[col_name]].fillna(np.mean(df[[col_name]]))
-            null_columns=df.columns[df.isnull().any()]
 
-    # df['year'] = pd.DatetimeIndex(df['date']).year
-    # df = df.set_index('year')
     year = pd.DatetimeIndex(df['date']).year
-    min_year = year.min()
-    max_year = year.max()
-    # df = df.drop(['Year', 'date'], axis=1)
     print("The full dataset contains from {} - {} but we choose from {}".format(
-        min_year, max_year, df.index.min()))
-    plot_raw = df.copy()
+        year.min(), year.max(), df.index.min()))
     plot_raw = df.drop(
-        ['max_visibility', 'min_visibility', 'avg_visibility', 'avg_hourly_visibility','Year'] , axis=1)
-    plot_raw = plot_raw.sort_index(ascending=True)  # .tail(365)
+        ['max_visibility', 'min_visibility', 'avg_visibility', 'avg_hourly_visibility','Year'], axis=1)
+    plot_raw = plot_raw.sort_index(ascending=True)
     ax = plot_raw[['max_temperature', 'avg_hourly_temperature','avg_temperature','min_temperature']].plot(title='Full Time Series Data',fontsize=13, figsize = (16,3.5))
     ax.set_ylabel('Value',fontsize=13)
     ax.set_xlabel('Date/Time',fontsize=13)
-    # utils.save_or_show_plot("raw_data.png",save_plots)
 
     print("Shape of data {} Missing values {}".format(
         df.shape, df.isnull().sum().sum()))
-
-    # if debug:
-    #     df = df.iloc[:, 0:8]
 
     print(df.columns[df.isnull().any()])
     return df
 
 def create_dataset(dataset, look_back=1, forecast_horizon=1, batch_size=1):
-    #dataset = dataset.drop(['Year', 'date', 'cooldegdays', 'snow'], axis=1)
     batch_x, batch_y, batch_z = [], [], []
 
     for i in range(0, len(dataset)-look_back-forecast_horizon-batch_size+1, batch_size):
         for n in range(batch_size):
-            
-            # print (dataset.head())
-            #x = dataset.loc[:, dataset.columns != 'year'].values[i+n:(i + n + look_back), :]
+
             x = dataset[['max_temperature', 'avg_hourly_temperature',
                          'avg_temperature','min_temperature']].values[i+n:(i + n + look_back), :]
             n_features = x.shape[1]
@@ -87,7 +63,7 @@ def create_dataset(dataset, look_back=1, forecast_horizon=1, batch_size=1):
             constants.lstm_param['input_dim'] = n_features
             constants.enc_dec_param['input_dim'] = n_features
             constants.gu_lstm_param['input_dim'] = n_features
-            
+
             offset = x[0, 0]
             y = np.array([dataset['max_temperature'].values[i + n +
                                                            look_back:i + n + look_back + forecast_horizon].max()])
@@ -117,7 +93,6 @@ def LSTMTrainer (dataset):
     n_epochs = constants.lstm_param['n_epochs']
     model = models.LSTM(input_dim, hidden_dim, layer_dim, output_dim)
     model = model.cuda()
-    # opt = torch.optim.RMSprop(model.parameters(), lr=lr
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     print('Start Vanilla LSTM model training')
     model.train()
@@ -126,8 +101,8 @@ def LSTMTrainer (dataset):
     for epoch in range(1, n_epochs + 1):
         ep_loss = []
         for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
-            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-                                                        " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
+            # print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
+            #                                             " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
@@ -153,6 +128,7 @@ def LSTMTrainer (dataset):
     outLoss.close()
     utils.model_saver("vanilla_lstm.pth","LSTM",model)
     #torch.save(model, "model/vanilla_lstm.pth")
+
 def ENCDECTrainer (dataset):
     batch_size = constants.enc_dec_param['batch_size']
     forecast_horizon = constants.enc_dec_param['forecast_horizon']
@@ -178,8 +154,8 @@ def ENCDECTrainer (dataset):
         ep_loss = []
         for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
 
-            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-                                                        " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
+            # print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
+            #                                             " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
@@ -194,7 +170,7 @@ def ENCDECTrainer (dataset):
             loss.backward()
             optimizer.step()
             ep_loss.append(loss.item())
-      
+
         print()
     # torch.save(model, "model/auto_lstm.pth")
     outLoss = open("log/enddeclstm.txt", "w")
@@ -253,7 +229,7 @@ def GULSTMTrainer (dataset):
             new_loss.backward()
             optimizer.step()
             # print ("Loss components {} | {} | {}".format(l1,torch.exp(-l1)),new_loss)
-            #  END 
+            #  END
             if epoch == n_epochs - 1:
                 train_true_y.append((batch[0]).detach().numpy().reshape(-1))
                 train_pred_y.append((out.cpu()).detach().numpy().reshape(-1))
@@ -273,15 +249,15 @@ def GULSTMTrainer (dataset):
 
 if __name__ == "__main__":
     mkdir.mkdir()
-    print ("Using dvice {} for training".format(device))
+    print ("Using device {} for training".format(device))
     save_plots = True
     debug = False
     parser = argparse.ArgumentParser()
     parser.add_argument("train_mode")
     args = parser.parse_args()
-    #train_mode = "LSTM"
+
     ### READ DATASET ###
-    df = pd.read_csv('data/weatherstats_montreal_daily_inter.csv',
+    df = pd.read_csv('data/weatherstats_montreal_daily.csv',
                      index_col=0, nrows=100 if debug else None)
     df = pre_process(df)
     if args.train_mode == "LSTM":
