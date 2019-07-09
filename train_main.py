@@ -19,11 +19,10 @@ warnings.filterwarnings("ignore")
 
 
 def pre_process (df, save_plots = True):
-    df = df.drop(['max_humidex', 'min_windchill', 'sunrise',
-                  'sunset', 'sunlight', 'sunrise_f', 'sunset_f'], axis=1)
-    null_columns = df.columns[df.isnull().any()]
-    df = df[df['Year'] > 1954]
+    df = df.loc[df.index > "1954"]
+    df.index = pd.to_datetime(df.index)
 
+    null_columns = df.columns[df.isnull().any()]
     for col_name in null_columns:
         null_count = df[col_name].isnull().sum()
 
@@ -34,13 +33,8 @@ def pre_process (df, save_plots = True):
         elif null_count > 200:
             df[[col_name]] = df[[col_name]].fillna(np.mean(df[[col_name]]))
 
-    year = pd.DatetimeIndex(df['date']).year
-    print("The full dataset contains from {} - {} but we choose from {}".format(
-        year.min(), year.max(), df.index.min()))
-    plot_raw = df.drop(
-        ['max_visibility', 'min_visibility', 'avg_visibility', 'avg_hourly_visibility','Year'], axis=1)
-    plot_raw = plot_raw.sort_index(ascending=True)
-    ax = plot_raw[['max_temperature', 'avg_hourly_temperature','avg_temperature','min_temperature']].plot(title='Full Time Series Data',fontsize=13, figsize = (16,3.5))
+    plot_raw = df.loc[df.index > "2018", ["temp" in c for c in df.columns]]
+    ax = plot_raw.plot(title='Full Time Series Data',fontsize=13, figsize = (16,3.5))
     ax.set_ylabel('Value',fontsize=13)
     ax.set_xlabel('Date/Time',fontsize=13)
 
