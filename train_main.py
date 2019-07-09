@@ -111,7 +111,7 @@ def generic_train(model, df, param, loss_path, model_path):
 
         for i, batch in enumerate(cur_data):
             ticks = 20 * i // len(df) // param["batch_size"]
-            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*ix, " "* 20 - ticks, epoch, np.mean(ep_loss), end="\r"))
+            print("[{}{}] Epoch {}: loss={:0.4f}".format("-" * ix, " " * 20 - ticks, epoch, np.mean(ep_loss), end="\r"))
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
