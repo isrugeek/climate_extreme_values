@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 
 def pre_process (dataset, save_plots = True):
     save_plots = save_plots
-    df = dataset 
+    df = dataset
     df = df.drop(['max_humidex', 'min_windchill', 'sunrise',
                   'sunset', 'sunlight', 'sunrise_f', 'sunset_f'], axis=1)
     non_null_columns = [
@@ -72,36 +72,25 @@ def pre_process (dataset, save_plots = True):
     return df
 
 def create_dataset(dataset, look_back=1, forecast_horizon=1, batch_size=1):
-    #dataset = dataset.drop(['Year', 'date', 'cooldegdays', 'snow'], axis=1)
-    batch_x, batch_y, batch_z = [], [], []
+    batches = {"x": [], "y": [], "z": []}
 
     for i in range(0, len(dataset)-look_back-forecast_horizon-batch_size+1, batch_size):
         for n in range(batch_size):
-            
-            # print (dataset.head())
-            #x = dataset.loc[:, dataset.columns != 'year'].values[i+n:(i + n + look_back), :]
-            x = dataset[['max_temperature', 'avg_hourly_temperature',
-                         'avg_temperature','min_temperature']].values[i+n:(i + n + look_back), :]
-            n_features = x.shape[1]
-            # print ("no of fratures {}".format(n_features))
-            constants.lstm_param['input_dim'] = n_features
-            constants.enc_dec_param['input_dim'] = n_features
-            constants.gu_lstm_param['input_dim'] = n_features
-            
-            offset = x[0, 0]
-            y = np.array([dataset['max_temperature'].values[i + n +
-                                                           look_back:i + n + look_back + forecast_horizon].max()])
 
-            batch_x.append(np.array(x).reshape(look_back, -1))
-            batch_y.append(np.array(y))
-            batch_z.append(np.array(offset))
-        batch_x = np.array(batch_x)
-        batch_y = np.array(batch_y)
-        batch_z = np.array(batch_z)
-        batch_x[:, :, 0] -= batch_z.reshape(-1, 1)
-        batch_y -= batch_z.reshape(-1, 1)
-        yield batch_x, batch_y, batch_z
-        batch_x, batch_y, batch_z = [], [], []
+            past, cur, future = i + n, i + n + look_back, i + n + look_back + forecast_horizon
+            x = dataset[["temp" in c for c in df.columns]].values[past:cur, :]
+            y = np.array([dataset['max_temperature'].values[cur:future].max()])
+            batches["x"].append(np.array(x).reshape(look_back, -1))
+            batch["y"].append(np.array(y))
+            batch["z"].append(np.array(x[0, 0]))
+
+        for var, value in batches.items():
+            batches[var] = np.array(value)
+
+        batches["x"][:, :, 0] -= batches["z"].reshape(-1, 1)
+        batch["y"] -= batch["z"].reshape(-1, 1)
+        yield batches["x"], batches["y"], batches["z"]
+    batches = {"x": [], "y": [], "z": []}
 
 def LSTMTrainer (dataset):
     df = dataset
@@ -194,7 +183,7 @@ def ENCDECTrainer (dataset):
             loss.backward()
             optimizer.step()
             ep_loss.append(loss.item())
-      
+
         print()
     # torch.save(model, "model/auto_lstm.pth")
     outLoss = open("log/enddeclstm.txt", "w")
@@ -253,7 +242,7 @@ def GULSTMTrainer (dataset):
             new_loss.backward()
             optimizer.step()
             # print ("Loss components {} | {} | {}".format(l1,torch.exp(-l1)),new_loss)
-            #  END 
+            #  END
             if epoch == n_epochs - 1:
                 train_true_y.append((batch[0]).detach().numpy().reshape(-1))
                 train_pred_y.append((out.cpu()).detach().numpy().reshape(-1))
