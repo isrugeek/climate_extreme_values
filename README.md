@@ -8,7 +8,7 @@
 
 ![alt results gulstm ](git_figures/gtvspr.png)
 
-![alt data from a](git_figures/full_multi.png)
+![alt data from a](git_figures/full_mult.png)
 
 #### Abstract
 Climate change is already altering the prob- abilities of weather hazards. Accurate prediction of cli- mate extremes can inform effective preparation against weather-induced stresses. Forecasting extreme weather events accurately is a task that has attracted interest for many years. Classical and, to a lesser extent, machine learning-based approaches have handled this issue; how- ever, such systems are hard to tune or scale. While the prediction of extremes has been the subject of investiga- tion across several communities, including meteorology, machine learning, and statistics, it has been subject to far less scrutiny than the prediction of conditional means. In this work, we offer a systematic comparison of existing approaches on a pair of common tasks, maximum temper- ature and precipitation prediction. Further, motivated by this comparison, we propose a method to predict maxima in time series that unifies deep learning with extreme value theory
