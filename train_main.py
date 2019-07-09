@@ -95,8 +95,8 @@ def LSTMTrainer (dataset):
     for epoch in range(1, n_epochs + 1):
         ep_loss = []
         for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
-            # print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-            #                                             " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
+            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
+                                                         " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
@@ -148,8 +148,8 @@ def ENCDECTrainer (dataset):
         ep_loss = []
         for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
 
-            # print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-            #                                             " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
+            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
+                                                         " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
