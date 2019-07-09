@@ -1,14 +1,9 @@
 import os
-
-
 def mkdir ():
-
     plot_dir = "plots"
     model_dir = "model"
     data_dir = "data"
     log_dir = "log"
-
-
     if not os.path.exists(plot_dir):
         print ("Creating directory for {} ".format(plot_dir))
         os.makedirs(plot_dir)
