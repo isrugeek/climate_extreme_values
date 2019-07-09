@@ -6,7 +6,7 @@
 [Project](https://github.com/isrugeek/climate_extreme_values) | [Paper](.)
 
 
-![alt results gulstm ](git_figures/gtvspr.png)
+<!-- ![alt results gulstm ](git_figures/gtvspr.png) -->
 
 ![alt data from a](git_figures/full_mult.png)
 
