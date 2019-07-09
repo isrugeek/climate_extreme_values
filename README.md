@@ -25,6 +25,7 @@ Climate change is already altering the prob- abilities of weather hazards. Accur
 
 ### Prerequisites
 - Linux or OSX
+- Python 3.6
 - NVIDIA GPU + CUDA CuDNN (CPU mode and CUDA without CuDNN may work with minimal modification, but untested)
 
 - Clone this repo:
