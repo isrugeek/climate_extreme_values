@@ -12,6 +12,7 @@ import utils
 from utils import device
 import models
 import constants
+import mkdir
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -271,6 +272,7 @@ def GULSTMTrainer (dataset):
 
 
 if __name__ == "__main__":
+    mkdir.mkdir()
     print ("Using dvice {} for training".format(device))
     save_plots = True
     debug = False
