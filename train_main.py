@@ -92,31 +92,28 @@ def create_dataset(dataset, look_back=1, forecast_horizon=1, batch_size=1):
         yield batches["x"], batches["y"], batches["z"]
     batches = {"x": [], "y": [], "z": []}
 
-def LSTMTrainer (dataset):
-    df = dataset
-    batch_size = constants.lstm_param['batch_size']
-    forecast_horizon = constants.lstm_param['forecast_horizon']
-    look_back = constants.lstm_param['look_back']
-    input_dim = constants.lstm_param['input_dim']
-    hidden_dim = constants.lstm_param['hidden_dim']
-    layer_dim = constants.lstm_param['layer_dim']
-    output_dim = constants.lstm_param['output_dim']
-    seq_dim = constants.lstm_param['seq_dim']
-    lr = constants.lstm_param['lr']
-    n_epochs = constants.lstm_param['n_epochs']
-    model = models.LSTM(input_dim, hidden_dim, layer_dim, output_dim)
+def LSTMTrainer (df):
+    df = df[df["Year"] < 2018]
+    param = constants.lstm_param
+    model = models.LSTM(param["input_dim"], param["hidden_dim"], param["layer_dim"], param["output_dim"])
     model = model.cuda()
-    # opt = torch.optim.RMSprop(model.parameters(), lr=lr
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=param["lr"])
+
     print('Start Vanilla LSTM model training')
     model.train()
-    train_true_y = []
-    train_pred_y = []
-    for epoch in range(1, n_epochs + 1):
+    for epoch in range(1, param["n_epochs"] + 1):
         ep_loss = []
-        for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
-            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-                                                        " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
+
+        cur_data = create_dataset(
+            df,
+            look_back=param["look_back"],
+            forecast_horizon=param["forecast_horizon"],
+            batch_size=param["batch_size"]
+        )
+
+        for i, batch in enumerate(cur_data):
+            ticks = 20 * i // len(df) // param["batch_size"]
+            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*ix, " "* 20 - ticks, epoch, np.mean(ep_loss), end="\r"))
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
@@ -126,22 +123,20 @@ def LSTMTrainer (dataset):
             y_batch = batch[1].cuda().float()
             out = model.forward(x_batch)
             loss = model.loss(out, y_batch)
-    #         opt.step()
-            if epoch == n_epochs - 1:
-                train_true_y.append((batch[0]).detach().numpy().reshape(-1))
-                train_pred_y.append((out.cpu()).detach().numpy().reshape(-1))
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             ep_loss.append(loss.item())
         print()
+
     outLoss = open("log/lstm.txt", "w")
     for line in ep_loss:
-        outLoss.write(str(line))
-        outLoss.write("\n")
+        outLoss.write("{}\n".format(str(line)))
     outLoss.close()
     utils.model_saver("vanilla_lstm.pth","LSTM",model)
-    #torch.save(model, "model/vanilla_lstm.pth")
+
+
 def ENCDECTrainer (dataset):
     batch_size = constants.enc_dec_param['batch_size']
     forecast_horizon = constants.enc_dec_param['forecast_horizon']
