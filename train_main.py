@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 
 def pre_process (dataset, save_plots = True):
     save_plots = save_plots
-    df = dataset 
+    df = dataset
     df = df.drop(['max_humidex', 'min_windchill', 'sunrise',
                   'sunset', 'sunlight', 'sunrise_f', 'sunset_f'], axis=1)
     non_null_columns = [
@@ -72,62 +72,46 @@ def pre_process (dataset, save_plots = True):
     return df
 
 def create_dataset(dataset, look_back=1, forecast_horizon=1, batch_size=1):
-    #dataset = dataset.drop(['Year', 'date', 'cooldegdays', 'snow'], axis=1)
-    batch_x, batch_y, batch_z = [], [], []
+    batches = {"x": [], "y": [], "z": []}
 
     for i in range(0, len(dataset)-look_back-forecast_horizon-batch_size+1, batch_size):
         for n in range(batch_size):
-            
-            # print (dataset.head())
-            #x = dataset.loc[:, dataset.columns != 'year'].values[i+n:(i + n + look_back), :]
-            x = dataset[['max_temperature', 'avg_hourly_temperature',
-                         'avg_temperature','min_temperature']].values[i+n:(i + n + look_back), :]
-            n_features = x.shape[1]
-            # print ("no of fratures {}".format(n_features))
-            constants.lstm_param['input_dim'] = n_features
-            constants.enc_dec_param['input_dim'] = n_features
-            constants.gu_lstm_param['input_dim'] = n_features
-            
-            offset = x[0, 0]
-            y = np.array([dataset['max_temperature'].values[i + n +
-                                                           look_back:i + n + look_back + forecast_horizon].max()])
 
-            batch_x.append(np.array(x).reshape(look_back, -1))
-            batch_y.append(np.array(y))
-            batch_z.append(np.array(offset))
-        batch_x = np.array(batch_x)
-        batch_y = np.array(batch_y)
-        batch_z = np.array(batch_z)
-        batch_x[:, :, 0] -= batch_z.reshape(-1, 1)
-        batch_y -= batch_z.reshape(-1, 1)
-        yield batch_x, batch_y, batch_z
-        batch_x, batch_y, batch_z = [], [], []
+            past, cur, future = i + n, i + n + look_back, i + n + look_back + forecast_horizon
+            x = dataset[["temp" in c for c in df.columns]].values[past:cur, :]
+            y = np.array([dataset['max_temperature'].values[cur:future].max()])
+            batches["x"].append(np.array(x).reshape(look_back, -1))
+            batch["y"].append(np.array(y))
+            batch["z"].append(np.array(x[0, 0]))
 
-def LSTMTrainer (dataset):
-    df = dataset
-    batch_size = constants.lstm_param['batch_size']
-    forecast_horizon = constants.lstm_param['forecast_horizon']
-    look_back = constants.lstm_param['look_back']
-    input_dim = constants.lstm_param['input_dim']
-    hidden_dim = constants.lstm_param['hidden_dim']
-    layer_dim = constants.lstm_param['layer_dim']
-    output_dim = constants.lstm_param['output_dim']
-    seq_dim = constants.lstm_param['seq_dim']
-    lr = constants.lstm_param['lr']
-    n_epochs = constants.lstm_param['n_epochs']
-    model = models.LSTM(input_dim, hidden_dim, layer_dim, output_dim)
+        for var, value in batches.items():
+            batches[var] = np.array(value)
+
+        batches["x"][:, :, 0] -= batches["z"].reshape(-1, 1)
+        batch["y"] -= batch["z"].reshape(-1, 1)
+        yield batches["x"], batches["y"], batches["z"]
+    batches = {"x": [], "y": [], "z": []}
+
+
+def generic_train(model, df, param, loss_path, model_path):
+    df = df[df["Year"] < 2018]
     model = model.cuda()
-    # opt = torch.optim.RMSprop(model.parameters(), lr=lr
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    print('Start Vanilla LSTM model training')
+    optimizer = torch.optim.Adam(model.parameters(), lr=param["lr"])
+
     model.train()
-    train_true_y = []
-    train_pred_y = []
-    for epoch in range(1, n_epochs + 1):
+    for epoch in range(1, param["n_epochs"] + 1):
         ep_loss = []
-        for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
-            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-                                                        " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
+
+        cur_data = create_dataset(
+            df,
+            look_back=param["look_back"],
+            forecast_horizon=param["forecast_horizon"],
+            batch_size=param["batch_size"]
+        )
+
+        for i, batch in enumerate(cur_data):
+            ticks = 20 * i // len(df) // param["batch_size"]
+            print("[{}{}] Epoch {}: loss={:0.4f}".format("-" * ix, " " * 20 - ticks, epoch, np.mean(ep_loss), end="\r"))
             try:
                 batch = [torch.Tensor(x) for x in batch]
             except:
@@ -137,72 +121,29 @@ def LSTMTrainer (dataset):
             y_batch = batch[1].cuda().float()
             out = model.forward(x_batch)
             loss = model.loss(out, y_batch)
-    #         opt.step()
-            if epoch == n_epochs - 1:
-                train_true_y.append((batch[0]).detach().numpy().reshape(-1))
-                train_pred_y.append((out.cpu()).detach().numpy().reshape(-1))
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            ep_loss.append(loss.item())
-        print()
-    outLoss = open("log/lstm.txt", "w")
-    for line in ep_loss:
-        outLoss.write(str(line))
-        outLoss.write("\n")
-    outLoss.close()
-    utils.model_saver("vanilla_lstm.pth","LSTM",model)
-    #torch.save(model, "model/vanilla_lstm.pth")
-def ENCDECTrainer (dataset):
-    batch_size = constants.enc_dec_param['batch_size']
-    forecast_horizon = constants.enc_dec_param['forecast_horizon']
-    look_back = constants.enc_dec_param['look_back']
-    lr = constants.enc_dec_param['lr']
-    n_epochs = constants.enc_dec_param['n_epochs']
-    output_dim = constants.enc_dec_param['output_dim']
-    model = models.ENDELSTM(dict(features=constants.enc_dec_param['n_features'], output_dim = output_dim))
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    # Print model's state_dict
-    print("Model's State Dict:")
-    for param_tensor in model.state_dict():
-        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-    # Print optimizer's state_dict
-    print("Optimizer's State Dict:")
-    for var_name in optimizer.state_dict():
-        print(var_name, "\t", optimizer.state_dict()[var_name])
-    print("Start ENCDEC LSTM model training")
-    model.train()
-    train_true_y = []
-    train_pred_y = []
-    for epoch in range(1, n_epochs+1):
-        ep_loss = []
-        for i, batch in enumerate(create_dataset(df[df['Year'] < 2018], look_back=look_back, forecast_horizon=forecast_horizon, batch_size=batch_size)):
 
-            print("[{}{}] Epoch {}: loss={:0.4f}".format("-"*(20*i//(len(df[df['Year'] < 2018])//batch_size)),
-                                                        " "*(20-(20*i//(len(df[df['Year'] < 2018])//batch_size))), epoch, np.mean(ep_loss)), end="\r")
-            try:
-                batch = [torch.Tensor(x) for x in batch]
-            except:
-                break
-            out = model.forward(batch[0].float(), batch_size)
-            loss = model.loss(out, batch[1].float())
-            if epoch == n_epochs - 1:
-                train_true_y.append(
-                    (batch[1] + batch[2]).detach().numpy().reshape(-1))
-                train_pred_y.append((out + batch[2]).detach().numpy().reshape(-1))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             ep_loss.append(loss.item())
-      
         print()
-    # torch.save(model, "model/auto_lstm.pth")
-    outLoss = open("log/enddeclstm.txt", "w")
+
+    outLoss = open(loss_path, "w")
     for line in ep_loss:
-        outLoss.write(str(line))
-        outLoss.write("\n")
+        outLoss.write("{}\n".format(str(line)))
     outLoss.close()
-    utils.model_saver("auto_lstm.pth", "ENCDEC", model)
+    utils.model_saver(model_path, model)
+
+
+def LSTMTrainer (df):
+    param = constants.lstm_param
+    model = models.LSTM(param["input_dim"], param["hidden_dim"], param["layer_dim"], param["output_dim"])
+    generic_train(model, df, param, "log/lstm.txt", "vanilla_lstm.pth")
+
+def ENCDECTrainer (df):
+    param = constants.enc_dec_param
+    model = models.ENDELSTM(dict(features=param['n_features'], output_dim = param["output_dim"]))
+    generic_train(model, df, param, "log/enddeclstm.txt", "auto_lstm.pth")
 
 
 def GULSTMTrainer (dataset):
@@ -253,7 +194,7 @@ def GULSTMTrainer (dataset):
             new_loss.backward()
             optimizer.step()
             # print ("Loss components {} | {} | {}".format(l1,torch.exp(-l1)),new_loss)
-            #  END 
+            #  END
             if epoch == n_epochs - 1:
                 train_true_y.append((batch[0]).detach().numpy().reshape(-1))
                 train_pred_y.append((out.cpu()).detach().numpy().reshape(-1))
