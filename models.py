@@ -17,7 +17,7 @@ class ENDELSTM(nn.Module):
                                config.get('output_dim'))
         self.loss_fn = nn.MSELoss()
 
-    def forward(self, x, batch_size=100):
+    def forward(self, x, batch_size=1):
         hidden = self.init_hidden(batch_size)
         output, _ = self.lstm(x, hidden)
         output = F.dropout(output, p=0.5, training=True)
@@ -31,12 +31,15 @@ class ENDELSTM(nn.Module):
     def init_hidden(self, batch_size):
         h0 = Variable(torch.zeros(self.bi, batch_size, self.hidden_size))
         c0 = Variable(torch.zeros(self.bi, batch_size, self.hidden_size))
-        return h0, c0
+        
+        #return h0, c0
+        return [t.cuda() for t in (h0, c0)]
 
     def init_hidden2(self, batch_size):
         h0 = Variable(torch.zeros(self.bi, batch_size, self.hidden_size//4))
         c0 = Variable(torch.zeros(self.bi, batch_size, self.hidden_size//4))
-        return h0, c0
+        #return h0, c0
+        return [t.cuda() for t in (h0, c0)]
 
     def loss(self, pred, truth):
         return self.loss_fn(pred, truth)
@@ -92,6 +95,8 @@ class GULSTM(nn.Module):
         c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim)
         return [t.cuda() for t in (h0, c0)]
 
-    def loss(self, pred, truth):
+    def loss(self, mu_hat, x_t):
+        l1 = x_t - mu_hat
+        return (l1 + torch.exp(-l1))
         #this loss function is MSE and the other loss fucntion is in the trainer
-        return self.loss_fn(pred, truth)
+        #return self.loss_fn(pred, truth)

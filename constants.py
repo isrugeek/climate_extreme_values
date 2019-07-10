@@ -29,6 +29,7 @@ gu_lstm_param = {
     "output_dim" : 1,
     "forecast_horizon" : 1,
     "look_back": 28,
+    "lr": 0.0005, 
     "forecast_horizon": 15,
     "batch_size": 1
 }
