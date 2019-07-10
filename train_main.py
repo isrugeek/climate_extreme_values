@@ -1,72 +1,45 @@
+#!/usr/bin/env python
 from sklearn.metrics import mean_absolute_error
 import matplotlib
 matplotlib.use('agg')
+from torch import nn
+from utils import device
 import argparse
+import constants
+import json
+import mkdir
+import models
 import numpy as np
+import os
 import pandas as pd
 import torch
-from torch import nn
-import json
-import os
 import utils
-from utils import device
-import models
-import constants
-import mkdir
 import warnings
 warnings.filterwarnings("ignore")
 
 
-def pre_process (dataset, save_plots = True):
-    save_plots = save_plots
-    df = dataset
-    df = df.drop(['max_humidex', 'min_windchill', 'sunrise',
-                  'sunset', 'sunlight', 'sunrise_f', 'sunset_f'], axis=1)
-    non_null_columns = [
-        col for col in df.columns if df.loc[:, col].notna().any()]
-    df[non_null_columns]
+def pre_process (df, save_plots = True):
+    df = df.loc[df.index > "1954"]
+    df.index = pd.to_datetime(df.index)
+
     null_columns = df.columns[df.isnull().any()]
-
-    df = (df[df['Year'] > 1954])
-    #utils.fill_missing_one_day(df.values)
-    # df = df.drop(['max_humidex', 'min_windchill'], axis=1)
     for col_name in null_columns:
-        if (df[col_name].isnull().sum() < 200):
-            #print ("Filling {}'s null data by previous day.".format(col_name))
+        null_count = df[col_name].isnull().sum()
+
+        if null_count < 200:
             utils.fill_missing_one_day(df[[col_name]].values)
-            null_columns = df.columns[df.isnull().any()]
-        if (df[col_name].isnull().sum() > (int(int(df.shape[0])*0.8))):
-            #print ("Dropping {}.".format(col_name))
+        elif null_count > len(df) * 0.8:
             df = df.drop([col_name], axis=1)
-            null_columns=df.columns[df.isnull().any()]
-    for col_name in null_columns:
-        if (df[col_name].isnull().sum() > 200):
-            #print ("Filling {}'s null data by Mean.".format(col_name))
+        elif null_count > 200:
             df[[col_name]] = df[[col_name]].fillna(np.mean(df[[col_name]]))
-            null_columns=df.columns[df.isnull().any()]
 
-    # df['year'] = pd.DatetimeIndex(df['date']).year
-    # df = df.set_index('year')
-    year = pd.DatetimeIndex(df['date']).year
-    min_year = year.min()
-    max_year = year.max()
-    # df = df.drop(['Year', 'date'], axis=1)
-    print("The full dataset contains from {} - {} but we choose from {}".format(
-        min_year, max_year, df.index.min()))
-    plot_raw = df.copy()
-    plot_raw = df.drop(
-        ['max_visibility', 'min_visibility', 'avg_visibility', 'avg_hourly_visibility','Year'] , axis=1)
-    plot_raw = plot_raw.sort_index(ascending=True)  # .tail(365)
-    ax = plot_raw[['max_temperature', 'avg_hourly_temperature','avg_temperature','min_temperature']].plot(title='Full Time Series Data',fontsize=13, figsize = (16,3.5))
+    plot_raw = df.loc[df.index > "2018", ["temp" in c for c in df.columns]]
+    ax = plot_raw.plot(title='Full Time Series Data',fontsize=13, figsize = (16,3.5))
     ax.set_ylabel('Value',fontsize=13)
     ax.set_xlabel('Date/Time',fontsize=13)
-    # utils.save_or_show_plot("raw_data.png",save_plots)
 
     print("Shape of data {} Missing values {}".format(
         df.shape, df.isnull().sum().sum()))
-
-    # if debug:
-    #     df = df.iloc[:, 0:8]
 
     print(df.columns[df.isnull().any()])
     return df
@@ -121,7 +94,6 @@ def generic_train(model, df, param, loss_path, model_path):
             y_batch = batch[1].cuda().float()
             out = model.forward(x_batch)
             loss = model.loss(out, y_batch)
-
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -214,15 +186,15 @@ def GULSTMTrainer (dataset):
 
 if __name__ == "__main__":
     mkdir.mkdir()
-    print ("Using dvice {} for training".format(device))
+    print ("Using device {} for training".format(device))
     save_plots = True
     debug = False
     parser = argparse.ArgumentParser()
     parser.add_argument("train_mode")
     args = parser.parse_args()
-    #train_mode = "LSTM"
+
     ### READ DATASET ###
-    df = pd.read_csv('data/weatherstats_montreal_daily_inter.csv',
+    df = pd.read_csv('data/weatherstats_montreal_daily.csv',
                      index_col=0, nrows=100 if debug else None)
     df = pre_process(df)
     if args.train_mode == "LSTM":
