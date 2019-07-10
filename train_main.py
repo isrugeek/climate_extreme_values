@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 from sklearn.metrics import mean_absolute_error
+import matplotlib
+matplotlib.use('agg')
 from torch import nn
 from utils import device
 import argparse
 import constants
 import json
-import matplotlib
 import mkdir
 import models
 import numpy as np
@@ -14,7 +15,6 @@ import pandas as pd
 import torch
 import utils
 import warnings
-matplotlib.use('agg')
 warnings.filterwarnings("ignore")
 
 
