@@ -68,13 +68,13 @@ Run the code from the main directory which the README.md is located
 
  **Note:** *This project is still under development*
 
- ## Citation
+ <!-- ## Citation
 
 ```
-@article{nanoscaleCol2019,
+@article{extreme2019,
   title={Forecasting Maxima in Climate Time Series},
   author={Israel Goytom, Kris Sankaran,},
   journal={github},
   year={2019}
 }
-```
+``` -->
