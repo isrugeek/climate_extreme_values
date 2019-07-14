@@ -14,13 +14,13 @@
 Climate change is already altering the probabilities of weather hazards. Accurate prediction of climate extremes can inform effective preparation against weather-induced stresses. Accurately Forecasting extreme weather events is a task that has attracted interest for many years. Classical and, to a lesser extent, machine learning-based approaches have handled this issue; however, such systems are hard to tune or scale. While the prediction of extremes has been the subject of investigation across several communities, including meteorology, machine learning, and statistics, it has been subject to far less scrutiny than the prediction of conditional means. In this work, we offer a systematic comparison of existing approaches on a pair of common tasks, maximum temperature, and precipitation prediction. Further, motivated by this comparison, we propose a method to forecast maxima in time series that unifies deep learning with extreme value theory.
 
 #### A Pytorch implmentation for Forecasting Maxima in Climate Time Series
-Hyperparameters 
+<!-- Hyperparameters 
 
 
 |   `batch_size` \ `param_2`|**a**| **b**| **c**|
 | ----------- |:------:| -----:|  -----:|
 | **a** | - | - | -|
-| **b** | - | - | - |
+| **b** | - | - | - | -->
 
 ### Dataset
 **Note**: Please Download the dataset file from [climate.weather.gc.ca](climate.weather.gc.ca), [Kaggle](https://kaggle.com/c/short-term-load-forecasting-challenge/data) or 
